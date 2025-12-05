@@ -1,0 +1,546 @@
+/* リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background-color: #f5f5f5;
+    overflow: hidden;
+}
+
+/* ヘッダー */
+.header {
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+}
+
+.header-icon {
+    font-size: 20px;
+}
+
+.header-center {
+    font-size: 12px;
+}
+
+.lm-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#lmStatusText.connected {
+    color: #00ff88;
+}
+
+#lmStatusText.disconnected {
+    color: #ff4444;
+}
+
+.header-right {
+    font-size: 14px;
+}
+
+/* メインコンテナ */
+.main-container {
+    display: flex;
+    height: calc(100vh - 40px);
+}
+
+/* 左ペイン (30%) */
+.left-pane {
+    width: 30%;
+    background: #ffffff;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+}
+
+/* キャラクターアバター */
+.character-avatar {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.character-name {
+    font-weight: bold;
+    color: #333;
+}
+
+/* チャットコンテナ */
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #fafafa;
+}
+
+/* メッセージバブル */
+.message {
+    margin-bottom: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+    text-align: right;
+}
+
+.message.assistant {
+    text-align: left;
+}
+
+.message-bubble {
+    display: inline-block;
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 18px;
+    word-wrap: break-word;
+}
+
+.message.user .message-bubble {
+    background-color: #667eea;
+    color: white;
+}
+
+.message.assistant .message-bubble {
+    background-color: #e9e9eb;
+    color: #333;
+}
+
+/* 入力エリア */
+.input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    background: white;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+}
+
+#messageInput:focus {
+    border-color: #667eea;
+}
+
+#sendButton {
+    margin-left: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#sendButton:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+#sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 右ペイン (70%) */
+.right-pane {
+    width: 70%;
+    background: #ffffff;
+    overflow-y: auto;
+    padding: 30px;
+}
+
+/* 人間形成ビジュアル */
+.human-formation {
+    margin-bottom: 30px;
+}
+
+.human-formation h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.human-visual {
+    width: 100%;
+    max-width: 500px;
+    height: 400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 20px;
+    position: relative;
+}
+
+/* ステージプレースホルダー */
+.stage-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.5s ease;
+}
+
+.stage-circle.stage-1 {
+    width: 100px;
+    height: 100px;
+}
+
+.stage-circle.stage-2 {
+    width: 150px;
+    height: 150px;
+}
+
+.stage-circle.stage-3 {
+    width: 200px;
+    height: 200px;
+}
+
+.stage-circle.stage-4 {
+    width: 250px;
+    height: 250px;
+}
+
+.stage-circle.stage-5 {
+    width: 300px;
+    height: 300px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+}
+
+.stage-info {
+    text-align: center;
+    margin-top: 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* バッジセクション */
+.badges-section {
+    margin-bottom: 30px;
+}
+
+.badges-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.badge-item {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    animation: badgePop 0.5s ease;
+}
+
+@keyframes badgePop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.badge-item .badge-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.badge-item .badge-name {
+    font-weight: bold;
+    font-size: 12px;
+    color: #333;
+}
+
+.no-badges {
+    color: #999;
+    font-style: italic;
+}
+
+/* ステータスセクション */
+.status-section {
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.status-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.collapsible {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+    transform: rotate(-90deg);
+}
+
+.status-content {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.status-content.collapsed {
+    max-height: 0;
+}
+
+.status-bars {
+    margin-bottom: 20px;
+}
+
+.status-bar {
+    margin-bottom: 15px;
+}
+
+.status-bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.5s ease;
+}
+
+.status-summary {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+
+.status-summary p {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* モーダル */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.modal-content p {
+    margin-bottom: 30px;
+    color: #666;
+}
+
+.gender-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.gender-btn {
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gender-btn:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* バッジ獲得モーダル */
+.badge-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.badge-modal-content {
+    background: white;
+    padding: 50px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    position: relative;
+    animation: badgeAppear 0.5s ease;
+}
+
+@keyframes badgeAppear {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.badge-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,215,0,0.5) 0%, transparent 70%);
+    animation: flash 1s ease infinite;
+    pointer-events: none;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+.badge-display {
+    margin: 30px 0;
+}
+
+.badge-display .badge-icon {
+    font-size: 80px;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.badge-display .badge-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.close-badge-btn {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-badge-btn:hover {
+    transform: scale(1.05);
+}
+
+/* リアクション演出 */
+.reaction-particle {
+    position: absolute;
+    font-size: 20px;
+    pointer-events: none;
+    animation: particle-float 1s ease-out forwards;
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) scale(1.5);
+        opacity: 0;
+    }
+}

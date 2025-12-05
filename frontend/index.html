@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview System - 音声対話型プロファイリング</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="header">
+        <div class="header-left">
+            <span class="header-icon">🎤</span>
+            <span class="header-title">Interview</span>
+        </div>
+        <div class="header-center">
+            <span class="lm-status" id="lmStatus">LM Studio: <span id="lmStatusText">確認中...</span></span>
+        </div>
+        <div class="header-right">
+            <span id="characterName">-</span>
+        </div>
+    </header>
+
+    <!-- メインコンテナ -->
+    <div class="main-container">
+        <!-- 左ペイン: チャット -->
+        <div class="left-pane">
+            <!-- キャラクターアバター -->
+            <div class="character-avatar" id="characterAvatar">
+                <div class="avatar-placeholder">
+                    <span id="avatarEmoji">👤</span>
+                </div>
+                <p class="character-name" id="characterNameDisplay">-</p>
+            </div>
+
+            <!-- チャット領域 -->
+            <div class="chat-container" id="chatContainer">
+                <!-- メッセージはJavaScriptで動的に追加 -->
+            </div>
+
+            <!-- 入力エリア -->
+            <div class="input-area">
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="メッセージを入力..."
+                    disabled
+                />
+                <button id="sendButton" disabled>送信</button>
+            </div>
+        </div>
+
+        <!-- 右ペイン: ビジュアライゼーション -->
+        <div class="right-pane">
+            <!-- 人間形成ビジュアル -->
+            <div class="human-formation" id="humanFormation">
+                <h2>人間形成</h2>
+                <div class="human-visual" id="humanVisual">
+                    <!-- SVGプレースホルダー -->
+                    <div class="stage-placeholder" id="stagePlaceholder">
+                        <div class="stage-circle stage-1"></div>
+                    </div>
+                </div>
+                <p class="stage-info" id="stageInfo">Stage 1: 輪郭のみ (0件)</p>
+            </div>
+
+            <!-- バッジセクション -->
+            <div class="badges-section" id="badgesSection">
+                <h3>獲得バッジ <span id="badgeCount">(0)</span></h3>
+                <div class="badges-container" id="badgesContainer">
+                    <p class="no-badges">まだバッジがありません</p>
+                </div>
+            </div>
+
+            <!-- ステータスセクション（折りたたみ可） -->
+            <div class="status-section">
+                <h3 class="collapsible" id="statusToggle">
+                    ステータス
+                    <span class="toggle-icon">▼</span>
+                </h3>
+                <div class="status-content" id="statusContent">
+                    <div class="status-bars" id="statusBars">
+                        <!-- カテゴリー別プログレスバー -->
+                    </div>
+                    <div class="status-summary">
+                        <p>総会話回数: <span id="sessionCount">0</span></p>
+                        <p>総情報数: <span id="totalDataCount">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スタート画面（モーダル） -->
+    <div class="modal" id="startModal">
+        <div class="modal-content">
+            <h2>インタビューを始めましょう</h2>
+            <p>あなたの性別を選択してください</p>
+            <div class="gender-buttons">
+                <button class="gender-btn" data-gender="男性">男性</button>
+                <button class="gender-btn" data-gender="女性">女性</button>
+                <button class="gender-btn" data-gender="その他">その他</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- バッジ獲得演出（モーダル） -->
+    <div class="badge-modal hidden" id="badgeModal">
+        <div class="badge-modal-content">
+            <div class="badge-flash"></div>
+            <h2>🎉 バッジ獲得！</h2>
+            <div class="badge-display" id="badgeDisplay">
+                <span class="badge-icon" id="newBadgeIcon">🏆</span>
+                <p class="badge-name" id="newBadgeName">バッジ名</p>
+            </div>
+            <button class="close-badge-btn" id="closeBadgeBtn">続ける</button>
+        </div>
+    </div>
+
+    <!-- JavaScriptファイル -->
+    <script src="js/chat.js"></script>
+    <script src="js/character.js"></script>
+    <script src="js/human-formation.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/visualizer.js"></script>
+
+    <script>
+        // アプリ初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            // LM Studio接続チェック
+            checkLMStudioConnection();
+
+            // スタートモーダル表示
+            showStartModal();
+
+            // ステータスセクション折りたたみ
+            setupStatusToggle();
+        });
+    </script>
+</body>
+</html>
