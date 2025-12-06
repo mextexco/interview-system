@@ -44,11 +44,11 @@ function updateCharacterExpression(expression) {
     if (emojiMap[expression]) {
         avatarEmoji.textContent = emojiMap[expression];
 
-        // 1秒後に元に戻す
+        // 3秒後に元に戻す
         setTimeout(() => {
             const characterId = currentProfile?.character || 'aoi';
             avatarEmoji.textContent = CHARACTER_EMOJIS[characterId] || '👤';
-        }, 1000);
+        }, 3000);
     }
 }
 

@@ -118,13 +118,13 @@ function triggerReaction(reactionTier) {
 
     if (reactionTier === 'small') {
         // 小さなパーティクル
-        createParticle(chatContainer, '✨', 1);
+        createParticle(chatContainer, '✨', 3);
     } else if (reactionTier === 'medium') {
         // 中規模パーティクル
-        createParticle(chatContainer, '⭐', 3);
+        createParticle(chatContainer, '⭐', 7);
     } else if (reactionTier === 'large') {
         // 大規模パーティクル
-        createParticle(chatContainer, '🌟', 5);
+        createParticle(chatContainer, '🌟', 12);
         // フラッシュ効果
         flashEffect();
     }
@@ -143,10 +143,10 @@ function createParticle(container, emoji, count) {
 
         container.appendChild(particle);
 
-        // 1秒後に削除
+        // 2秒後に削除
         setTimeout(() => {
             particle.remove();
-        }, 1000);
+        }, 2000);
     }
 }
 

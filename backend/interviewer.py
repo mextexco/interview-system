@@ -129,7 +129,9 @@ class Interviewer:
             if response.status_code == 200:
                 result = response.json()
                 assistant_message = result["choices"][0]["message"]["content"]
-                return assistant_message.strip()
+                # 内部コメントを除去
+                cleaned_message = self._clean_response(assistant_message)
+                return cleaned_message.strip()
             else:
                 print(f"LM Studio error: {response.status_code}")
                 return None
@@ -137,6 +139,33 @@ class Interviewer:
         except Exception as e:
             print(f"Error getting response: {e}")
             return None
+
+    def _clean_response(self, text: str) -> str:
+        """AI応答から内部コメントや不要な記号を除去"""
+        import re
+
+        # 各種内部コメントパターンを削除
+        patterns = [
+            r'\[思考:.*?\]',           # [思考: ...]
+            r'\[内部:.*?\]',           # [内部: ...]
+            r'\(思考:.*?\)',           # (思考: ...)
+            r'\(内部:.*?\)',           # (内部: ...)
+            r'<!--.*?-->',              # <!-- ... -->
+            r'\{思考:.*?\}',           # {思考: ...}
+            r'\{内部:.*?\}',           # {内部: ...}
+            r'<thinking>.*?</thinking>',  # <thinking>...</thinking>
+            r'\[Note:.*?\]',           # [Note: ...]
+            r'\(Note:.*?\)',           # (Note: ...)
+        ]
+
+        cleaned = text
+        for pattern in patterns:
+            cleaned = re.sub(pattern, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+
+        # 連続する空白を1つに
+        cleaned = re.sub(r'\s+', ' ', cleaned)
+
+        return cleaned.strip()
 
     def generate_greeting(self, character_id: str, user_name: str = None) -> str:
         """挨拶メッセージを生成"""
