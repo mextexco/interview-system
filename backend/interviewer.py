@@ -272,10 +272,18 @@ class Interviewer:
             if response.status_code == 200:
                 result = response.json()
                 extracted_text = result["choices"][0]["message"]["content"]
-                
+
+                # デバッグ: 生のレスポンスを出力
+                print(f"[Extraction] LM Studio response: {extracted_text}")
+
                 # JSON形式でパース
                 extracted_data = self._parse_extracted_data(extracted_text)
                 print(f"[Extraction] Found {len(extracted_data)} data points")
+
+                # デバッグ: 抽出されたデータを出力
+                for data in extracted_data:
+                    print(f"[Extraction] Data: {data}")
+
                 return extracted_data
             else:
                 print(f"[Extraction] LM Studio error: {response.status_code}")
@@ -319,27 +327,35 @@ class Interviewer:
     def _parse_extracted_data(self, text: str) -> List[Dict]:
         """抽出されたテキストからJSONデータをパース"""
         try:
+            print(f"[Extraction] Parsing text: {text[:500]}")
+
             # JSONブロックを抽出
             json_match = re.search(r"\[.*\]", text, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
+                print(f"[Extraction] JSON string: {json_str[:300]}")
+
                 data = json.loads(json_str)
-                
+
                 # バリデーション
                 valid_data = []
                 for item in data:
-                    if (isinstance(item, dict) and 
-                        "category" in item and 
-                        "key" in item and 
+                    if (isinstance(item, dict) and
+                        "category" in item and
+                        "key" in item and
                         "value" in item and
                         item["category"] in CATEGORIES):
                         valid_data.append(item)
-                
+                    else:
+                        print(f"[Extraction] Invalid item: {item}")
+
                 return valid_data
             else:
+                print(f"[Extraction] No JSON array found in text")
                 return []
         except json.JSONDecodeError as e:
             print(f"[Extraction] JSON parse error: {e}")
+            print(f"[Extraction] Problematic text: {text[:500]}")
             return []
         except Exception as e:
             print(f"[Extraction] Parse error: {e}")
