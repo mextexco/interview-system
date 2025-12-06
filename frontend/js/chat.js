@@ -6,6 +6,7 @@
 let currentUserId = null;
 let currentSessionId = null;
 let currentProfile = null;
+let messageCount = 0;
 const API_BASE_URL = 'http://localhost:5001/api';
 
 /**
@@ -86,6 +87,9 @@ async function startInterview(gender) {
         }
 
         currentSessionId = sessionData.session.session_id;
+
+        // メッセージカウントをリセット
+        messageCount = 0;
 
         // キャラクター設定
         setupCharacter(currentProfile.character);
@@ -212,6 +216,18 @@ async function sendMessage() {
         // プロファイル更新
         currentProfile = data.profile;
         updateStatusDisplay(currentProfile);
+
+        // メッセージカウントを増やす
+        messageCount++;
+
+        // ランダムイベント判定
+        if (typeof shouldTriggerEvent === 'function' && shouldTriggerEvent(messageCount)) {
+            // 少し遅らせて表示（アシスタントの返答の後）
+            setTimeout(() => {
+                const event = selectRandomEvent();
+                showEventModal(event);
+            }, 1000);
+        }
 
     } catch (error) {
         console.error('Send message error:', error);

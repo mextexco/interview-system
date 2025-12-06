@@ -119,8 +119,33 @@
         </div>
     </div>
 
+    <!-- ランダムイベント（モーダル） -->
+    <div class="event-modal hidden" id="eventModal">
+        <div class="event-modal-content">
+            <h2 id="eventTitle">イベント</h2>
+            <p class="event-question" id="eventContent">質問内容</p>
+
+            <!-- 選択肢（二択クイズ用） -->
+            <div class="event-choices" id="eventChoices"></div>
+
+            <!-- 入力欄（自由回答用） -->
+            <div class="event-input" id="eventInput">
+                <textarea
+                    id="eventInputField"
+                    placeholder="自由に答えてください..."
+                    rows="4"
+                ></textarea>
+                <div class="event-buttons">
+                    <button class="event-submit-btn" id="eventSubmitBtn">回答する</button>
+                    <button class="event-skip-btn" id="eventSkipBtn">スキップ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScriptファイル -->
     <script src="js/voice.js"></script>
+    <script src="js/events.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/character.js"></script>
     <script src="js/human-formation.js"></script>
