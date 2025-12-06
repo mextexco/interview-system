@@ -105,7 +105,7 @@
     </div>
 
     <!-- バッジ獲得演出（モーダル） -->
-    <div class="badge-modal hidden" id="badgeModal" data-version="3.0" data-initialized="false">
+    <div class="badge-modal hidden" id="badgeModal">
         <div class="badge-modal-content">
             <div class="badge-flash"></div>
             <h2>🎉 バッジ獲得！</h2>
@@ -114,35 +114,8 @@
                 <p class="badge-name" id="newBadgeName">バッジ名</p>
             </div>
             <button class="close-badge-btn" id="closeBadgeBtn">続ける</button>
-            <p style="font-size: 10px; color: #999; margin-top: 10px; text-align: center;">🔴 Version 3.0 - 2025-12-06 🔴</p>
         </div>
     </div>
-
-    <!-- 🔴 診断用インラインスクリプト - 最優先で実行 🔴 -->
-    <script>
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🔴 DIAGNOSTIC INLINE SCRIPT v3.0 - 2025-12-06');
-        console.log('🔴 このメッセージが見えれば、JavaScriptは動作しています');
-        console.log('🔴 現在のURL:', window.location.href);
-        console.log('🔴 タイムスタンプ:', new Date().toISOString());
-        console.log('🔴 バッジモーダル初期状態チェック:');
-
-        // ページ読み込み完了前でも実行
-        setTimeout(() => {
-            const modal = document.getElementById('badgeModal');
-            if (modal) {
-                console.log('  ✅ バッジモーダル要素発見');
-                console.log('  - data-version:', modal.getAttribute('data-version'));
-                console.log('  - classList:', modal.className);
-                console.log('  - display:', modal.style.display);
-                console.log('  - visibility:', window.getComputedStyle(modal).display);
-            } else {
-                console.log('  ❌ バッジモーダル要素が見つかりません（DOM未完成）');
-            }
-        }, 100);
-
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    </script>
 
     <!-- JavaScriptファイル -->
     <script src="js/chat.js"></script>
