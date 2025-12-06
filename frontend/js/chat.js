@@ -106,6 +106,9 @@ async function startInterview(gender) {
         // 送信ボタンイベント
         setupSendButton();
 
+        // 音声ボタンイベント
+        setupVoiceButton();
+
         // ビジュアライゼーション初期化
         updateHumanFormation(currentProfile.human_stage, 0);
         updateStatusDisplay(currentProfile);
@@ -129,6 +132,18 @@ function setupSendButton() {
             sendMessage();
         }
     });
+}
+
+/**
+ * 音声ボタンのセットアップ
+ */
+function setupVoiceButton() {
+    const micButton = document.getElementById('micButton');
+    if (micButton) {
+        micButton.addEventListener('click', () => {
+            startRecording();
+        });
+    }
 }
 
 /**
@@ -171,6 +186,11 @@ async function sendMessage() {
 
         // アシスタントメッセージを表示
         displayMessage('assistant', data.response, data.expression);
+
+        // 音声で読み上げ
+        if (typeof speakText === 'function') {
+            speakText(data.response, currentProfile.character);
+        }
 
         // リアクション演出
         if (data.reaction && data.reaction !== 'none') {

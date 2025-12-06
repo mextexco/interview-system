@@ -40,6 +40,7 @@
 
             <!-- 入力エリア -->
             <div class="input-area">
+                <button id="micButton" class="mic-button" title="音声入力を開始">🎙️</button>
                 <input
                     type="text"
                     id="messageInput"
@@ -47,6 +48,7 @@
                     disabled
                 />
                 <button id="sendButton" disabled>送信</button>
+                <span id="speakerIcon" class="speaker-icon" title="音声出力">🔇</span>
             </div>
         </div>
 
@@ -118,6 +120,7 @@
     </div>
 
     <!-- JavaScriptファイル -->
+    <script src="js/voice.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/character.js"></script>
     <script src="js/human-formation.js"></script>

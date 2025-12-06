@@ -143,6 +143,8 @@ body {
 /* 入力エリア */
 .input-area {
     display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 15px;
     border-top: 1px solid #eee;
     background: white;
@@ -161,8 +163,45 @@ body {
     border-color: #667eea;
 }
 
+/* 音声ボタン */
+.mic-button {
+    padding: 10px 15px;
+    font-size: 24px;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mic-button:hover {
+    background: #f0f0ff;
+    transform: scale(1.1);
+}
+
+.mic-button.recording {
+    background: #ff4757;
+    border-color: #ff4757;
+    animation: mic-pulse 1s infinite;
+}
+
+@keyframes mic-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
 #sendButton {
-    margin-left: 10px;
     padding: 10px 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -179,6 +218,31 @@ body {
 #sendButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* スピーカーアイコン */
+.speaker-icon {
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px;
+}
+
+.speaker-icon:hover {
+    transform: scale(1.2);
+}
+
+.speaker-icon.speaking {
+    animation: speaker-pulse 0.5s infinite;
+}
+
+@keyframes speaker-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
 }
 
 /* 右ペイン (70%) */
