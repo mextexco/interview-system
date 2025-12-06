@@ -264,7 +264,7 @@ if __name__ == '__main__':
         print("Please start LM Studio at http://localhost:1234")
 
     print("=" * 50)
-    print("Server starting at http://localhost:5000")
+    print("Server starting at http://localhost:5001")
     print("=" * 50)
 
     app.run(debug=True, host='0.0.0.0', port=5001)
