@@ -407,6 +407,14 @@ body {
     display: none;
 }
 
+/* バッジモーダル非表示（CRITICAL - 起動時の誤表示を防ぐ） */
+.badge-modal.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 .modal-content {
     background: white;
     padding: 40px;
