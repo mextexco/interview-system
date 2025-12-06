@@ -129,8 +129,18 @@ class Interviewer:
             if response.status_code == 200:
                 result = response.json()
                 assistant_message = result["choices"][0]["message"]["content"]
-                # 内部コメントを除去
-                cleaned_message = self._clean_response(assistant_message)
+
+                # デバッグ: 元のメッセージを出力
+                print(f"[DEBUG] LM Studio raw response: {assistant_message[:200]}")
+
+                # 内部コメントを除去（一時的に無効化）
+                # cleaned_message = self._clean_response(assistant_message)
+                cleaned_message = assistant_message  # 一時的に無効化
+
+                # デバッグ: クリーン後のメッセージを出力
+                print(f"[DEBUG] Cleaned response: {cleaned_message[:200]}")
+                print(f"[DEBUG] Response length - raw: {len(assistant_message)}, cleaned: {len(cleaned_message)}")
+
                 return cleaned_message.strip()
             else:
                 print(f"LM Studio error: {response.status_code}")
