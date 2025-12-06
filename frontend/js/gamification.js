@@ -1,6 +1,12 @@
 /**
  * ゲーミフィケーション: バッジ、リアクション演出
+ * Version 3.0 - 2025-12-06
  */
+
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('🔴 [Gamification.js] ファイル読み込み開始 - Version 3.0');
+console.log('🔴 タイムスタンプ:', new Date().toISOString());
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 const BADGE_ICONS = {
     "オープンハート": "💖",
@@ -19,19 +25,50 @@ const BADGE_ICONS = {
  * バッジ獲得モーダルを表示
  */
 function showBadgeModal(badgeName) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🎖️ [Badge Display] showBadgeModal呼び出し:', badgeName);
+    console.log('🎖️ [Badge Display] 呼び出し元トレース:');
+    console.trace();
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // バッジ名が空、未定義、または無効な場合は表示しない
+    if (!badgeName || typeof badgeName !== 'string' || badgeName.trim() === '') {
+        console.log('❌ [Badge Display] Invalid badge name, skipping modal:', badgeName);
+        return;
+    }
+
+    // バッジが定義されているかチェック
+    if (!BADGE_ICONS[badgeName]) {
+        console.warn('⚠️ [Badge Display] Unknown badge, skipping:', badgeName);
+        return;
+    }
+
     const modal = document.getElementById('badgeModal');
     const badgeIcon = document.getElementById('newBadgeIcon');
     const badgeNameElem = document.getElementById('newBadgeName');
 
-    badgeIcon.textContent = BADGE_ICONS[badgeName] || '🏆';
+    // 要素が存在しない場合は中止
+    if (!modal || !badgeIcon || !badgeNameElem) {
+        console.error('❌ [Badge Display] Badge modal elements not found');
+        return;
+    }
+
+    console.log('✅ [Badge Display] バッジモーダルを表示します:', badgeName);
+    badgeIcon.textContent = BADGE_ICONS[badgeName];
     badgeNameElem.textContent = badgeName;
 
+    // モーダルを表示
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 
-    // 閉じるボタン
+    // 閉じるボタンのイベントリスナーを削除してから再設定（重複防止）
     const closeBtn = document.getElementById('closeBadgeBtn');
-    closeBtn.onclick = () => {
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    newCloseBtn.onclick = () => {
         modal.classList.add('hidden');
+        modal.style.display = 'none';
         // バッジをバッジセクションに追加
         addBadgeToDisplay(badgeName);
     };
@@ -39,7 +76,7 @@ function showBadgeModal(badgeName) {
     // 自動で閉じる（3秒後）
     setTimeout(() => {
         if (!modal.classList.contains('hidden')) {
-            closeBtn.click();
+            newCloseBtn.click();
         }
     }, 3000);
 }
@@ -148,3 +185,50 @@ function flashEffect() {
         flash.remove();
     }, 300);
 }
+
+/**
+ * バッジモーダル初期化（ページ読み込み時に確実に非表示）
+ */
+function initializeBadgeModal() {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔧 [Badge Init] バッジモーダル初期化開始 - Version 3.0');
+    console.log('🔧 [Badge Init] タイムスタンプ:', new Date().toISOString());
+
+    const modal = document.getElementById('badgeModal');
+    if (modal) {
+        console.log('  ✅ バッジモーダル要素発見');
+        console.log('  - 初期化前 classList:', modal.classList.toString());
+        console.log('  - 初期化前 display:', modal.style.display);
+        console.log('  - 初期化前 computed display:', window.getComputedStyle(modal).display);
+
+        // 確実に非表示にする
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.setAttribute('data-initialized', 'true');
+        modal.setAttribute('data-version', '3.0');
+
+        console.log('  ✅ バッジモーダルを非表示にしました');
+        console.log('  - 初期化後 classList:', modal.classList.toString());
+        console.log('  - 初期化後 display:', modal.style.display);
+        console.log('  - 初期化後 computed display:', window.getComputedStyle(modal).display);
+    } else {
+        console.error('  ❌ バッジモーダル要素が見つかりません！');
+    }
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+}
+
+// ページ読み込み時に初期化
+console.log('🔧 [Badge Init] DOMContentLoadedイベントリスナー登録中...');
+console.log('🔧 [Badge Init] document.readyState:', document.readyState);
+
+if (document.readyState === 'loading') {
+    console.log('⏳ [Badge Init] DOMContentLoadedイベント待機中...');
+    document.addEventListener('DOMContentLoaded', initializeBadgeModal);
+} else {
+    console.log('⚡ [Badge Init] 即座に初期化実行');
+    initializeBadgeModal();
+}
+
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('🔴 [Gamification.js] ファイル読み込み完了 - Version 3.0');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
