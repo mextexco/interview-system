@@ -3,6 +3,8 @@
 """
 
 import requests
+import json
+import re
 from typing import Dict, List, Optional
 from config import (
     LM_STUDIO_URL, LM_STUDIO_MODEL, CHARACTERS, CATEGORIES
@@ -238,3 +240,108 @@ class Interviewer:
         }
 
         return questions.get(category, "他に何か教えて！")
+
+    def extract_profile_data(self, user_message: str, assistant_response: str, 
+                             conversation_history: List[Dict]) -> List[Dict]:
+        """
+        会話からプロファイリングデータを抽出
+        Returns: [{"category": "基本プロフィール", "key": "職業", "value": "エンジニア"}, ...]
+        """
+        try:
+            # データ抽出用プロンプト
+            extraction_prompt = self._create_extraction_prompt(
+                user_message, assistant_response, conversation_history
+            )
+
+            # LM Studioにリクエスト
+            response = requests.post(
+                self.lm_studio_url,
+                json={
+                    "model": LM_STUDIO_MODEL,
+                    "messages": [
+                        {"role": "system", "content": extraction_prompt},
+                        {"role": "user", "content": user_message}
+                    ],
+                    "max_tokens": 500,
+                    "temperature": 0.3,  # 低めで正確性を重視
+                    "stream": False
+                },
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                extracted_text = result["choices"][0]["message"]["content"]
+                
+                # JSON形式でパース
+                extracted_data = self._parse_extracted_data(extracted_text)
+                print(f"[Extraction] Found {len(extracted_data)} data points")
+                return extracted_data
+            else:
+                print(f"[Extraction] LM Studio error: {response.status_code}")
+                return []
+
+        except Exception as e:
+            print(f"[Extraction] Error: {e}")
+            return []
+
+    def _create_extraction_prompt(self, user_message: str, assistant_response: str,
+                                  conversation_history: List[Dict]) -> str:
+        """データ抽出用のプロンプトを生成"""
+        categories_desc = "\\n".join([
+            f"- {cat}: {CATEGORIES[cat][\"description\"]}"
+            for cat in CATEGORIES.keys()
+        ])
+
+        prompt = f"""あなたはプロファイリングデータ抽出の専門家です。
+ユーザーの発言から、以下のカテゴリーに該当する情報を抽出してください。
+
+【カテゴリー】
+{categories_desc}
+
+【ルール】
+1. ユーザーの発言から明確に読み取れる情報のみ抽出
+2. 推測や想像は含めない
+3. JSON配列形式で出力: [{{"category": "カテゴリー名", "key": "項目名", "value": "値"}}]
+4. 情報がない場合は空配列 [] を返す
+5. 各データポイントは簡潔に（key: 10文字以内、value: 50文字以内）
+
+【出力例】
+[
+  {{"category": "基本プロフィール", "key": "職業", "value": "エンジニア"}},
+  {{"category": "趣味・興味・娯楽", "key": "趣味", "value": "読書"}}
+]
+
+ユーザーの発言を分析して、JSON配列のみを返してください。説明文は不要です。"""
+
+        return prompt
+
+    def _parse_extracted_data(self, text: str) -> List[Dict]:
+        """抽出されたテキストからJSONデータをパース"""
+        try:
+            # JSONブロックを抽出
+            json_match = re.search(r"\\[.*\\]", text, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+                data = json.loads(json_str)
+                
+                # バリデーション
+                valid_data = []
+                for item in data:
+                    if (isinstance(item, dict) and 
+                        "category" in item and 
+                        "key" in item and 
+                        "value" in item and
+                        item["category"] in CATEGORIES):
+                        valid_data.append(item)
+                
+                return valid_data
+            else:
+                return []
+        except json.JSONDecodeError as e:
+            print(f"[Extraction] JSON parse error: {e}")
+            return []
+        except Exception as e:
+            print(f"[Extraction] Parse error: {e}")
+            return []
+

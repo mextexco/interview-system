@@ -206,6 +206,26 @@ def chat():
     # アシスタントメッセージを保存
     profile_manager.add_message(session_id, 'assistant', assistant_response, expression)
 
+    # プロファイリングデータ抽出
+    extracted_data = interviewer.extract_profile_data(
+        user_message,
+        assistant_response,
+        messages
+    )
+
+    # 抽出したデータを保存
+    for data_point in extracted_data:
+        try:
+            profile_manager.add_extracted_data(
+                session_id,
+                data_point['category'],
+                data_point['key'],
+                data_point['value']
+            )
+            print(f"[Data] Saved: {data_point['category']} - {data_point['key']}: {data_point['value']}")
+        except Exception as e:
+            print(f"[Data] Error saving data point: {e}")
+
     # バッジチェック
     newly_earned_badges = gamification.check_badges(profile, message_analysis)
     for badge_name in newly_earned_badges:
