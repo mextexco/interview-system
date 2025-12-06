@@ -288,8 +288,8 @@ class Interviewer:
     def _create_extraction_prompt(self, user_message: str, assistant_response: str,
                                   conversation_history: List[Dict]) -> str:
         """データ抽出用のプロンプトを生成"""
-        categories_desc = "\\n".join([
-            f"- {cat}: {CATEGORIES[cat][\"description\"]}"
+        categories_desc = "\n".join([
+            f"- {cat}: {CATEGORIES[cat]['description']}"
             for cat in CATEGORIES.keys()
         ])
 
@@ -320,7 +320,7 @@ class Interviewer:
         """抽出されたテキストからJSONデータをパース"""
         try:
             # JSONブロックを抽出
-            json_match = re.search(r"\\[.*\\]", text, re.DOTALL)
+            json_match = re.search(r"\[.*\]", text, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 data = json.loads(json_str)
