@@ -53,6 +53,18 @@ class DataValidator:
                     "働いていない", "ニート", "求職中"
                 ],
                 "check_type": "mutual_exclusive"
+            },
+            "住居状況": {
+                "single_indicators": [
+                    "1人暮らし", "独身", "一人暮らし", "単身",
+                    "ひとり暮らし", "独り暮らし", "一人", "単独"
+                ],
+                "family_indicators": [
+                    "家族", "両親", "妻", "夫", "子供", "子", "父", "母",
+                    "兄", "弟", "姉", "妹", "祖父", "祖母", "孫",
+                    "人家族", "世帯", "同居"
+                ],
+                "check_type": "mutual_exclusive"
             }
         }
     }
@@ -218,6 +230,81 @@ class DataValidator:
 
         return True, None
 
+    def _check_cross_category_contradiction(
+        self,
+        new_category: str,
+        new_key: str,
+        new_value: str,
+        all_data: Dict[str, List[Dict]]
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Check contradictions across categories
+        カテゴリーをまたいだ矛盾をチェック
+
+        Example: "1人暮らし" in "現在の生活/住居状況" vs "妻と子供2人" in "基本プロフィール/家族構成"
+        """
+        # 家族構成関連のキーリスト
+        family_related_keys = [
+            ("基本プロフィール", "家族構成"),
+            ("現在の生活", "住居状況"),
+        ]
+
+        # 新しいデータが家族構成関連かチェック
+        if (new_category, new_key) not in family_related_keys:
+            return True, None
+
+        # 新しい値がどのグループに属するか判定
+        new_value_lower = new_value.lower()
+        new_value_group = None
+
+        # 家族構成のルールを使用
+        family_rule = self.CONTRADICTION_RULES.get("基本プロフィール", {}).get("家族構成", {})
+
+        for group_name in ["single_indicators", "family_indicators"]:
+            indicators = family_rule.get(group_name, [])
+            for indicator in indicators:
+                if indicator in new_value_lower:
+                    new_value_group = group_name
+                    break
+            if new_value_group:
+                break
+
+        # グループに属さない場合はチェックしない
+        if not new_value_group:
+            return True, None
+
+        # 全カテゴリーの家族構成関連キーをチェック
+        for check_category, check_key in family_related_keys:
+            # 同じカテゴリー・キーはスキップ（既に check_contradiction でチェック済み）
+            if check_category == new_category and check_key == new_key:
+                continue
+
+            # 該当カテゴリーのデータをチェック
+            category_data = all_data.get(check_category, [])
+            for existing_item in category_data:
+                if existing_item.get("key") != check_key:
+                    continue
+
+                existing_value = str(existing_item.get("value", "")).lower()
+
+                # 既存データがどのグループに属するか判定
+                for group_name in ["single_indicators", "family_indicators"]:
+                    if group_name == new_value_group:
+                        continue
+
+                    indicators = family_rule.get(group_name, [])
+                    for indicator in indicators:
+                        if indicator in existing_value:
+                            # 矛盾を発見
+                            conflict_msg = (
+                                f"Cross-category contradiction: "
+                                f"New value '{new_value}' in {new_category}/{new_key} ({new_value_group}) "
+                                f"contradicts existing '{existing_item['value']}' in {check_category}/{check_key} ({group_name})"
+                            )
+                            return False, conflict_msg
+
+        return True, None
+
     def validate_geographic_data(self, value: str) -> Dict[str, Any]:
         """
         Validate geographic data (prefecture + city combination)
@@ -305,11 +392,19 @@ class DataValidator:
         category: str,
         key: str,
         value: Any,
-        existing_data: List[Dict]
+        existing_data: List[Dict],
+        all_data: Optional[Dict[str, List[Dict]]] = None
     ) -> Dict[str, Any]:
         """
         Complete validation for a single data point
         単一のデータポイントを完全に検証
+
+        Args:
+            category: カテゴリー名
+            key: キー名
+            value: 値
+            existing_data: 同じカテゴリーの既存データ
+            all_data: 全カテゴリーのデータ（カテゴリーをまたいだ矛盾検出用）
 
         Returns:
             {
@@ -325,13 +420,22 @@ class DataValidator:
             "warnings": []
         }
 
-        # 矛盾チェック
+        # 矛盾チェック（同じカテゴリー内）
         is_valid, conflict_msg = self.check_contradiction(
             category, key, value, existing_data
         )
         if not is_valid:
             validation_result["valid"] = False
             validation_result["contradictions"].append(conflict_msg)
+
+        # カテゴリーをまたいだ矛盾チェック
+        if all_data:
+            cross_category_valid, cross_conflict_msg = self._check_cross_category_contradiction(
+                category, key, value, all_data
+            )
+            if not cross_category_valid:
+                validation_result["valid"] = False
+                validation_result["contradictions"].append(cross_conflict_msg)
 
         # 地理的検証（住所関連のキーの場合）
         if key in ["住所", "居住地", "出身地", "勤務地"]:

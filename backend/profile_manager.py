@@ -142,9 +142,10 @@ class ProfileManager:
         # データバリデーションを実行 / Validate data
         validator = DataValidator()
         existing_data = session["extracted_data"][category]
+        all_data = session["extracted_data"]  # カテゴリーをまたいだ矛盾検出用
 
         validation_result = validator.validate_data_point(
-            category, key, value, existing_data
+            category, key, value, existing_data, all_data
         )
 
         # 矛盾がある場合はスキップ / Skip if contradictions found
