@@ -170,11 +170,20 @@ function speakText(text, characterId = 'aoi') {
     utterance.onstart = () => {
         console.log('[Voice] Speech started');
         updateSpeakerIcon(true);
+        // 音声読み上げ中は音声認識を停止（AIの音声を拾わないため）
+        if (isRecording) {
+            recognition.stop();
+            isRecording = false;
+            updateMicButton(false);  // UIも更新
+            console.log('[Voice] Recognition paused during speech');
+        }
     };
 
     utterance.onend = () => {
         console.log('[Voice] Speech ended');
         updateSpeakerIcon(false);
+        // 音声読み上げが終わったら自動的に音声認識を再開しない
+        // ユーザーが明示的にマイクボタンを押す必要がある
     };
 
     utterance.onerror = (event) => {
