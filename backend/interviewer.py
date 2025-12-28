@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from config import (
     LM_STUDIO_URL, LM_STUDIO_MODEL, CHARACTERS, CATEGORIES
 )
+from key_normalizer import KeyNormalizer
 
 
 class Interviewer:
@@ -73,8 +74,12 @@ class Interviewer:
 - その後、自然な会話でプロファイリング
 - 空白カテゴリーがあれば軽く振る（「そういえば〜」）
 - ユーザーが話したいことを優先
-- 無理に質問を続けない
+- 無理に質問を続けない（3回短い回答なら話題を変える）
 - 相手の発言に共感しながら進める
+- 1語回答の場合は具体例を示して掘り下げる
+  例: 「IT」→「ITのどんなお仕事ですか？開発、インフラ、営業など」
+- 曖昧な回答には選択肢を提示
+  例: 「普通」→「朝型ですか？夜型ですか?」
 
 【プロファイリングカテゴリー】
 {categories_info}
@@ -241,57 +246,92 @@ class Interviewer:
 
         return questions.get(category, "他に何か教えて！")
 
-    def extract_profile_data(self, user_message: str, assistant_response: str, 
+    def extract_profile_data(self, user_message: str, assistant_response: str,
                              conversation_history: List[Dict]) -> List[Dict]:
         """
         会話からプロファイリングデータを抽出
         Returns: [{"category": "基本プロフィール", "key": "職業", "value": "エンジニア"}, ...]
         """
-        try:
-            # データ抽出用プロンプト
-            extraction_prompt = self._create_extraction_prompt(
-                user_message, assistant_response, conversation_history
-            )
+        max_retries = 2
 
-            # LM Studioにリクエスト
-            response = requests.post(
-                self.lm_studio_url,
-                json={
-                    "model": LM_STUDIO_MODEL,
-                    "messages": [
-                        {"role": "system", "content": extraction_prompt},
-                        {"role": "user", "content": user_message}
-                    ],
-                    "max_tokens": 500,
-                    "temperature": 0.3,  # 低めで正確性を重視
-                    "stream": False
-                },
-                timeout=30
-            )
+        for attempt in range(max_retries):
+            try:
+                # データ抽出用プロンプト
+                extraction_prompt = self._create_extraction_prompt(
+                    user_message, assistant_response, conversation_history
+                )
 
-            if response.status_code == 200:
-                result = response.json()
-                extracted_text = result["choices"][0]["message"]["content"]
+                # LM Studioにリクエスト
+                response = requests.post(
+                    self.lm_studio_url,
+                    json={
+                        "model": LM_STUDIO_MODEL,
+                        "messages": [
+                            {"role": "system", "content": extraction_prompt},
+                            {"role": "user", "content": user_message}
+                        ],
+                        "max_tokens": 500,
+                        "temperature": 0.3,  # 低めで正確性を重視
+                        "stream": False
+                    },
+                    timeout=30
+                )
 
-                # デバッグ: 生のレスポンスを出力
-                print(f"[Extraction] LM Studio response: {extracted_text}")
+                if response.status_code == 200:
+                    result = response.json()
+                    extracted_text = result["choices"][0]["message"]["content"]
 
-                # JSON形式でパース
-                extracted_data = self._parse_extracted_data(extracted_text)
-                print(f"[Extraction] Found {len(extracted_data)} data points")
+                    # デバッグ: 生のレスポンスを出力
+                    print(f"[Extraction] LM Studio response: {extracted_text}")
 
-                # デバッグ: 抽出されたデータを出力
-                for data in extracted_data:
-                    print(f"[Extraction] Data: {data}")
+                    # JSON形式でパース
+                    extracted_data = self._parse_extracted_data(extracted_text)
+                    print(f"[Extraction] Found {len(extracted_data)} data points")
 
-                return extracted_data
-            else:
-                print(f"[Extraction] LM Studio error: {response.status_code}")
+                    # キー正規化を適用 / Apply key normalization
+                    normalizer = KeyNormalizer()
+                    normalized_data = normalizer.normalize_batch(extracted_data)
+
+                    # 正規化統計をログ出力
+                    stats = normalizer.get_normalization_stats()
+                    if stats["total_normalizations"] > 0:
+                        print(f"[Normalization] Normalized {stats['total_normalizations']} keys")
+                        for category, data in stats['by_category'].items():
+                            for raw, normalized in data['mappings'].items():
+                                print(f"[Normalization]   {category}/{raw} → {normalized}")
+
+                    # デバッグ: 抽出されたデータを出力
+                    for data in normalized_data:
+                        print(f"[Extraction] Data: {data}")
+
+                    # データが抽出できた、または最後の試行の場合は結果を返す
+                    if normalized_data or attempt == max_retries - 1:
+                        return normalized_data
+
+                    # データが空で、まだリトライ可能な場合
+                    print(f"[Extraction] No data extracted, retry {attempt + 1}/{max_retries}")
+                    continue
+                else:
+                    print(f"[Extraction] LM Studio error: {response.status_code}")
+                    if attempt < max_retries - 1:
+                        print(f"[Extraction] Retrying... ({attempt + 1}/{max_retries})")
+                        continue
+                    return []
+
+            except requests.exceptions.Timeout:
+                print(f"[Extraction] Timeout on attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    print(f"[Extraction] Retrying...")
+                    continue
+                return []
+            except Exception as e:
+                print(f"[Extraction] Error: {e}")
+                if attempt < max_retries - 1:
+                    print(f"[Extraction] Retrying... ({attempt + 1}/{max_retries})")
+                    continue
                 return []
 
-        except Exception as e:
-            print(f"[Extraction] Error: {e}")
-            return []
+        return []
 
     def _create_extraction_prompt(self, user_message: str, assistant_response: str,
                                   conversation_history: List[Dict]) -> str:
@@ -301,24 +341,67 @@ class Interviewer:
             for cat in CATEGORIES.keys()
         ])
 
+        # 会話コンテキストを追加（直近5メッセージ）
+        recent_context = conversation_history[-5:] if len(conversation_history) > 5 else conversation_history
+        context_text = "\n".join([
+            f"{msg['role']}: {msg['content'][:100]}"
+            for msg in recent_context
+        ])
+
+        # 標準キー名のリスト
+        standard_keys_desc = """
+基本プロフィール: 名前, 年齢, 性別, 職業, 住所, 家族構成, 住居状況
+ライフストーリー: 学歴, 職歴, 人生の転機, 出身地, 習慣, 活動, 経験
+現在の生活: 住居, 生活リズム, 食事, 睡眠, 通勤
+健康・ライフスタイル: 運動習慣, 食事好み, 健康状態, 医療
+趣味・興味・娯楽: 趣味, 音楽, 食べ物, 旅行, 活動
+学習・成長: 学習内容, 分野, 活動, 目標, スキル
+人間関係・コミュニティ: 友人, 家族関係, 所属, 活動
+情報収集・メディア: 情報源, SNS, プラットフォーム, 関心事
+経済・消費: 年収, 財政状況, 投資, 消費
+価値観・将来: 価値観, 夢, 人生観, 理想"""
+
         prompt = f"""あなたはプロファイリングデータ抽出の専門家です。
 ユーザーの発言から、以下のカテゴリーに該当する情報を抽出してください。
+
+【会話コンテキスト】
+{context_text}
 
 【カテゴリー】
 {categories_desc}
 
+【推奨される標準キー名】
+{standard_keys_desc}
+
+これらの標準キー名を優先的に使用してください。
+
 【ルール】
 1. ユーザーの発言から明確に読み取れる情報のみ抽出
-2. 推測や想像は含めない
-3. JSON配列形式で出力: [{{"category": "カテゴリー名", "key": "項目名", "value": "値"}}]
-4. 情報がない場合は空配列 [] を返す
-5. 各データポイントは簡潔に（key: 10文字以内、value: 50文字以内）
+2. 会話の文脈を考慮して情報を抽出（単一発言だけでなく流れを見る）
+3. 推測や想像は含めない
+4. JSON配列形式で出力: [{{"category": "カテゴリー名", "key": "項目名", "value": "値"}}]
+5. 情報がない場合は空配列 [] を返す
+6. 各データポイントは簡潔に（key: 10文字以内、value: 50文字以内）
+7. 標準キー名を優先的に使用
 
-【出力例】
-[
-  {{"category": "基本プロフィール", "key": "職業", "value": "エンジニア"}},
-  {{"category": "趣味・興味・娯楽", "key": "趣味", "value": "読書"}}
+【良い抽出例】
+ユーザー: "東京の渋谷区に住んでいます。ITエンジニアとして働いています。"
+出力: [
+  {{"category": "基本プロフィール", "key": "住所", "value": "東京都渋谷区"}},
+  {{"category": "基本プロフィール", "key": "職業", "value": "ITエンジニア"}}
 ]
+
+ユーザー: "毎朝ジョギングしてます。週3回くらい"
+出力: [
+  {{"category": "健康・ライフスタイル", "key": "運動習慣", "value": "毎朝ジョギング週3回"}}
+]
+
+【悪い抽出例】
+ユーザー: "そうですね"
+出力: []  # 具体的な情報がないため空配列
+
+ユーザー: "うーん、わからないです"
+出力: []  # 情報がないため空配列
 
 ユーザーの発言を分析して、JSON配列のみを返してください。説明文は不要です。"""
 

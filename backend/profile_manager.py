@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 from config import PROFILES_DIR, SESSIONS_DIR, CATEGORIES, HUMAN_STAGES
+from data_validator import DataValidator
 
 
 class ProfileManager:
@@ -127,7 +128,10 @@ class ProfileManager:
 
     def add_extracted_data(self, session_id: str, category: str,
                           key: str, value: any) -> Dict:
-        """抽出したプロファイリングデータを追加"""
+        """
+        抽出したプロファイリングデータを追加
+        Add extracted profiling data with validation
+        """
         session = self.get_session(session_id)
         if not session:
             raise ValueError(f"Session {session_id} not found")
@@ -135,11 +139,54 @@ class ProfileManager:
         if category not in session["extracted_data"]:
             session["extracted_data"][category] = []
 
+        # データバリデーションを実行 / Validate data
+        validator = DataValidator()
+        existing_data = session["extracted_data"][category]
+
+        validation_result = validator.validate_data_point(
+            category, key, value, existing_data
+        )
+
+        # 矛盾がある場合はスキップ / Skip if contradictions found
+        if not validation_result["valid"]:
+            contradictions = validation_result.get("contradictions", [])
+            print(f"[Validation] Data rejected: {contradictions}")
+            for contradiction in contradictions:
+                print(f"  - {contradiction}")
+
+            # 矛盾データは保存しない / Don't save contradictory data
+            return session
+
+        # 警告がある場合はログ出力 / Log warnings if any
+        warnings = validation_result.get("warnings", [])
+        if warnings:
+            print(f"[Validation] Warnings for {category}/{key}:")
+            for warning in warnings:
+                print(f"  - {warning}")
+
+        # 値を正規化 / Normalize value
+        normalized_value = validator.normalize_value(category, key, value)
+
+        # 正規化が行われたかチェック / Check if normalization occurred
+        normalization_occurred = normalized_value != value
+        if normalization_occurred:
+            print(f"[Normalization] {category}/{key}: '{value}' → {normalized_value}")
+
+        # データエントリ作成 / Create data entry
         data_entry = {
             "key": key,
-            "value": value,
-            "timestamp": datetime.now().isoformat()
+            "value": normalized_value,
+            "timestamp": datetime.now().isoformat(),
+            "data_version": "2.0"  # バージョン追跡
         }
+
+        # 正規化が行われた場合は元の値も保存 / Save original value if normalized
+        if normalization_occurred:
+            data_entry["original_value"] = value
+
+        # バリデーション情報を追加（オプション） / Add validation info (optional)
+        if warnings:
+            data_entry["validation_warnings"] = warnings
 
         session["extracted_data"][category].append(data_entry)
         self._save_session(session_id, session)
